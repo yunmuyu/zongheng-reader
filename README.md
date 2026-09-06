@@ -9,6 +9,8 @@
 - 即刻原始导出 ZIP：包含 `all_posts.json`、`posts/**/post.json` 和图片。
 - AI 阅读包 ZIP：包含 `data.json`。
 
+仓库中也保留了这次使用的[即刻原始导出 ZIP](source/zongheng-jike-export.zip)，可以下载后再通过「导入 ZIP」打开。
+
 导入后会把 ZIP 内的帖子替换为当前阅读内容，图片会在浏览器本地解压并立即可读；已读、收藏、待实践、高亮和批注会继续保存在本机。
 
 ## GitHub Pages
