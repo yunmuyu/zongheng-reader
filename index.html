@@ -47,7 +47,7 @@ aside{position:relative}.side{position:sticky;top:79px;max-height:calc(100vh - 9
 <select class="btn" id="viewMode" title="阅读视图"><option value="stream">时间流</option><option value="masonry">瀑布卡片</option><option value="focus">专注阅读</option></select>
 <select class="btn hide-mobile" id="sortMode" title="未读永远优先，已读自动沉底；这里仅控制各组内部的时间顺序"><option value="desc">新 → 旧</option><option value="asc">旧 → 新</option></select>
 <button class="btn primary" id="aiCenterBtn">AI 蒸馏</button>
-<button class="btn" id="zipImportBtn">导入 ZIP</button><button class="btn" id="exportBtn">导出 ▾</button>
+<button class="btn" id="zipImportBtn">导入 ZIP</button><button class="btn" id="stateExportBtn">备份状态</button><button class="btn" id="stateImportBtn">恢复状态</button>
 <input id="importInput" type="file" accept="application/json" hidden><input id="zipImportInput" type="file" accept=".zip,application/zip" hidden>
 </div></div></header>
 <div class="layout">
@@ -196,8 +196,14 @@ function normalizeImportedPost(raw,detail,images){
   const original=POSTS.find(p=>p.id===raw.id),topic=detail?.topic||null,link=detail?.linkInfo||null;
   return {id:raw.id,content:raw.content||'',excerpt:raw.excerpt||String(raw.content||'').replace(/\s+/g,' ').slice(0,180),createdAt:raw.createdAt||new Date().toISOString(),actionTime:raw.actionTime||raw.createdAt||new Date().toISOString(),url:raw.url||'',author:typeof raw.author==='string'?raw.author:(raw.author?.screenName||raw.author?.username||''),topic:raw.topic||topic?.title||null,topicUrl:raw.topicUrl||topic?.url||original?.topicUrl||null,linkInfo:link||((raw.linkTitle||raw.linkUrl)?{title:raw.linkTitle||'',url:raw.linkUrl||'',pictureUrl:null}:original?.linkInfo||null),images,stats:detail?.stats||raw.stats||{likeCount:0,commentCount:0,repostCount:0},themes:raw.themes?.length?raw.themes:(original?.themes||['导入内容'])}}
 async function importReadableZip(file){
-  const entries=await unzipFile(file),names=[...entries.keys()],dataName=names.find(n=>n.endsWith('/data.json')||n==='data.json'),allName=names.find(n=>n.endsWith('/all_posts.json')||n==='all_posts.json');
-  if(!dataName&&!allName)throw new Error('找不到 all_posts.json 或 data.json');
+  const entries=await unzipFile(file),names=[...entries.keys()],dataName=names.find(n=>n.endsWith('/data.json')||n==='data.json'),allName=names.find(n=>n.endsWith('/all_posts.json')||n==='all_posts.json'),htmlName=names.find(n=>n.toLowerCase().endsWith('.html'));
+  if(!dataName&&!allName&&!htmlName)throw new Error('找不到 V3 HTML、all_posts.json 或 data.json');
+  if(htmlName){
+    const source=zipDecode(entries.get(htmlName)),token=source.includes('let POSTS=')?'let POSTS=':'const POSTS=',start=source.indexOf(token),end=source.indexOf('];\nconst THEME_ORDER',start);
+    if(start<0||end<0)throw new Error('找不到 V3 阅读数据');
+    const base=htmlName.slice(0,htmlName.lastIndexOf('/')+1),posts=JSON.parse(source.slice(start+token.length,end+1));
+    return posts.map(p=>{const images=(p.images||[]).map(image=>{const name=base+String(image.src||''),bytes=entries.get(name),src=bytes?URL.createObjectURL(new Blob([bytes],{type:imageType(name)})):image.src;return {src,width:image.width||0,height:image.height||0}});return normalizeImportedPost(p,p,images)});
+  }
   if(dataName){
     const data=JSON.parse(zipDecode(entries.get(dataName)));if(!Array.isArray(data.posts))throw new Error('data.json 不是阅读包格式');
     return data.posts.map(p=>normalizeImportedPost(p,p,p.images||[]));
@@ -218,7 +224,7 @@ async function importReadableZip(file){
 }
 $('#zipImportBtn').onclick=()=>$('#zipImportInput').click();
 $('#zipImportInput').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const next=await importReadableZip(file);if(!next.length)throw new Error('ZIP 中没有可阅读内容');POSTS=next;saveState();render();toast(`已导入 ${next.length} 条内容，可直接阅读`)}catch(err){alert(`ZIP 导入失败：${err.message||'文件格式无法识别'}`)}e.target.value=''};
-$('#searchInput').oninput=e=>{filter.q=e.target.value.trim();render()};$('#sortMode').onchange=e=>{appState.sort=e.target.value;saveState();render()};$('#viewMode').onchange=e=>{appState.view=e.target.value;saveState();if(e.target.value==='focus')openFocus(0);else render()};$('#aiCenterBtn').onclick=openAICenter;$('#aiClose').onclick=closeAICenter;$('#aiPackageBtn').onclick=exportAIPackage;$('#aiOneFileBtn').onclick=exportAIOneFile;$('#aiCopyMasterBtn').onclick=()=>copyText(AI_MASTER_PROMPT,'总分析指令已复制');$$('[data-ai-prompt]').forEach(b=>b.onclick=()=>copyText(AI_PROMPTS[b.dataset.aiPrompt],'阶段指令已复制'));$('#exportBtn').onclick=exportMenu;$('#resumeBtn').onclick=resume;$('#resumeTop').onclick=resume;
+$('#searchInput').oninput=e=>{filter.q=e.target.value.trim();render()};$('#sortMode').onchange=e=>{appState.sort=e.target.value;saveState();render()};$('#viewMode').onchange=e=>{appState.view=e.target.value;saveState();if(e.target.value==='focus')openFocus(0);else render()};$('#aiCenterBtn').onclick=openAICenter;$('#aiClose').onclick=closeAICenter;$('#aiPackageBtn').onclick=exportAIPackage;$('#aiOneFileBtn').onclick=exportAIOneFile;$('#aiCopyMasterBtn').onclick=()=>copyText(AI_MASTER_PROMPT,'总分析指令已复制');$$('[data-ai-prompt]').forEach(b=>b.onclick=()=>copyText(AI_PROMPTS[b.dataset.aiPrompt],'阶段指令已复制'));$('#stateExportBtn').onclick=exportJSON;$('#stateImportBtn').onclick=()=>$('#importInput').click();$('#resumeBtn').onclick=resume;$('#resumeTop').onclick=resume;
 $('#focusClose').onclick=closeFocus;$('#focusPrev').onclick=$('#focusPrev2').onclick=()=>focusMove(-1);$('#focusNext').onclick=$('#focusNext2').onclick=()=>focusMove(1);$('#focusDone').onclick=()=>{const p=visiblePosts[focusIndex];if(p){ps(p.id).read=true;saveState();if(focusIndex<visiblePosts.length-1)focusMove(1);else renderFocus()}};
 function currentPostId(){if(isFocusOpen())return visiblePosts[focusIndex]?.id||null;let best=null,dist=Infinity;$$('#stream .post-card').forEach(c=>{const r=c.getBoundingClientRect();if(r.bottom>70&&r.top<innerHeight){const d=Math.abs((r.top+r.bottom)/2-innerHeight/2);if(d<dist){dist=d;best=c}}});return best?.dataset.id||null}
 function markCurrentRead(){const id=currentPostId();if(!id)return;ps(id).read=true;saveState();if(isFocusOpen())renderFocus(true);else render();toast('已标记为已读；它会自动沉到已读区底部')}
