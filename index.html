@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>纵横四海 · 阅读工作台</title>
+<title>阅读台</title>
 <style>
 :root{--bg:#f4f7fb;--paper:#ffffff;--ink:#182230;--muted:#6b7788;--line:#dbe3ec;--accent:#3b6ff5;--accent2:#4f6b8a;--soft:#edf2f7;--shadow:0 9px 28px rgba(38,57,77,.08);--radius:18px;--sidebar:292px;}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.75 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
@@ -40,7 +40,7 @@ aside{position:relative}.side{position:sticky;top:79px;max-height:calc(100vh - 9
 <body>
 <div class="app">
 <header class="topbar"><div class="top-inner">
-<div class="brand">纵横四海 · 阅读工作台<small>176 条动态 · 本地批注 · 可导出</small></div>
+<div class="brand">阅读台<small>176 条动态 · 本地批注 · 可导出</small></div>
 <div class="search"><input id="searchInput" placeholder="搜索正文、主题、原话题…"></div>
 <div class="toolbar">
 <button class="btn hide-mobile" id="resumeTop">继续上次</button>
@@ -52,7 +52,7 @@ aside{position:relative}.side{position:sticky;top:79px;max-height:calc(100vh - 9
 </div></div></header>
 <div class="layout">
 <main>
-<div class="hero"><div><h1>把时间线读成自己的知识线索。</h1><p>按时间刷，按主题回看；已读自动沉底，收藏/待问 AI、待实践、高亮与批注都保存在本机。</p></div><div class="progress"><div id="progressText">已读 0 / 176</div><div class="progressline"><i id="progressBar"></i></div></div></div>
+<div class="hero"><div><h1>把时间线读成自己的知识线索。</h1></div><div class="progress"><div id="progressText">已读 0 / 176</div><div class="progressline"><i id="progressBar"></i></div></div></div>
 <div id="resumeBanner" class="resume"><span id="resumeText">继续上次阅读</span><button class="btn" id="resumeBtn">跳转</button></div>
 <div id="stream" class="stream"></div>
 </main>
